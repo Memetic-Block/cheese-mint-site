@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import { type ViteSSGOptions } from 'vite-ssg'
 import generateSitemap from 'vite-ssg-sitemap'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -13,7 +14,13 @@ export default defineConfig(({ mode }) => {
       "process.env": {},
       "process.browser": true
     },
-    plugins: [vue(), tailwindcss()],
+    plugins: [
+      vue(),
+      tailwindcss(),
+      nodePolyfills({
+        include: ['crypto', 'process', 'stream', 'buffer']
+      })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')

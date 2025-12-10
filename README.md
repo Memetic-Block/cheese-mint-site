@@ -1,8 +1,6 @@
-# Wuzzy Site
+# Cheese Mint Site
 
-A Vue.js frontend application for the Wuzzy platform, providing a user interface for browsing and interacting with nests, crawlers, and search functionality.
-
-Check it out at [https://wuzzy.arweave.net](https://wuzzy.arweave.net)
+A Vue.js frontend application for createing achievements on the permaweb.
 
 ## Prerequisites
 
@@ -14,7 +12,7 @@ Check it out at [https://wuzzy.arweave.net](https://wuzzy.arweave.net)
 
 1. Clone the repository and navigate to the project directory:
 ```bash
-cd wuzzy-site
+cd cheese-mint-site
 ```
 
 2. Install dependencies:
@@ -23,17 +21,9 @@ npm install
 ```
 
 ## Environment Variables
-The following environment variables are used in the webapp:
-### Required
-- `VITE_REGISTRY_PROCESS_ID` - A deploy Wuzzy Nest Registry Process
-- `VITE_PRIMARY_NEST_ID` - The primary Wuzzy Nest that will used for the homepage search
-- `VITE_HYPERBEAM_ENDPOINT` - The hyperbeam node you'd like to use
-
 The following environment variables are used for deployment:
 ### Required
 - `PRIVATE_KEY` - Path to your Arweave wallet keyfile
-### Optional
-- `GATEWAY` - Arweave gateway URL (default: `https://arweave.net`)
 
 ## Running for Development
 Start the development server:
