@@ -1,7 +1,7 @@
 export const metaTags = {
   title: 'Cheese Mints',
   description:
-    'Cheese Mints is a decentralized achievement tracking application built on the Arweave and AO',
+    'Cheese Mints is a decentralized achievement tracking application built on Arweave and AO',
   keywords: ['cheese', 'mints', 'ao', 'permaweb', 'arweave', 'hyperbeam', 'achievements']
 }
 
