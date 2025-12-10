@@ -29,7 +29,8 @@
   },
   "devDependencies": {
     "@ar.io/sdk": "^3.18.3",
-    "@ardrive/turbo-sdk": "^1.37.0",
+    "@ardrive/turbo-sdk": "^1.32.1",
+    "@dha-team/arbundles": "1.0.3",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/tsconfig": "^0.7.0",
     "dotenv": "^17.2.3",
