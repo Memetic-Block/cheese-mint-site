@@ -1,0 +1,503 @@
+<template>
+  <div class="mt-6">
+    <template v-if="isLoading">
+      Loading...
+    </template>
+    <template v-else-if="errorMessage">
+      Error: {{ errorMessage }}
+      <button class="border px-4 rounded cursor-pointer" @click="reloadProcessState">Reload</button>
+    </template>
+    <template v-else>
+      <div class="text-xs">
+        <table>
+          <thead>
+            <tr>
+              <th @click="tab = 'achievements'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'achievements' ? '' : 'text-gray-500'">Achievements</th>
+              <th @click="tab = 'awarded'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'awarded' ? '' : 'text-gray-500'">Awarded</th>
+              <th @click="tab = 'acl'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'acl' ? '' : 'text-gray-500'">ACL</th>              
+            </tr>
+          </thead>
+        </table>
+        <table>
+          <thead>
+            <tr>
+              <template v-if="tab === 'achievements'">
+                <th class="border">Name</th>
+                <th class="border">Description</th>
+                <th class="border">Points</th>
+                <th class="border">Icon</th>
+                <th class="border">Created</th>
+                <th class="border">Updated</th>
+                <th class="border">ID</th>
+                <th class="border"></th>
+              </template>
+              <template v-if="tab === 'awarded'">
+                <th class="border">Address</th>
+                <th class="border">Achievement</th>
+                <th class="border">Awarded</th>
+                <th class="border"></th>
+              </template>
+              <template v-if="tab === 'acl'">
+                <th class="border">Role</th>
+                <th class="border">Address</th>
+                <th class="border"></th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-if="tab === 'achievements'">
+              <tr v-for="cheeseMintId in Object.keys(state.cheese_mints_by_id)" :key="cheeseMintId">
+                <td class="border">
+                  <template v-if="editCheeseMintId === cheeseMintId">
+                    <input type="text" id="edit_name" name="edit_name" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].name" />
+                  </template>
+                  <template v-else>
+                    {{ state.cheese_mints_by_id[cheeseMintId].name }}
+                  </template>
+                </td>
+                <td class="border">
+                  <template v-if="editCheeseMintId === cheeseMintId">
+                    <input type="text" id="edit_description" name="edit_description" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].description" />
+                  </template>
+                  <template v-else>
+                    {{ state.cheese_mints_by_id[cheeseMintId].description }}
+                  </template>
+                </td>
+                <td class="border">
+                  <template v-if="editCheeseMintId === cheeseMintId">
+                    <input type="number" id="edit_points" name="edit_points" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].points" />
+                  </template>
+                  <template v-else>
+                  {{ state.cheese_mints_by_id[cheeseMintId].points }}
+                  </template>
+                </td>
+                <td class="border">
+                  <template v-if="editCheeseMintId === cheeseMintId">
+                    <input type="text" id="edit_icon" name="edit_icon" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].icon" />
+                  </template>
+                  <template v-else>
+                    <a class="cursor-pointer" :href="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" target="_blank" rel="noopener noreferrer">
+                      <img style="width: 32px; height: 32px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
+                    </a>
+                  </template>
+                </td>
+                <td class="border">
+                  {{ new Date(state.cheese_mints_by_id[cheeseMintId].created_at).toUTCString() }}
+                  by
+                  <a :href="aoLinkUrl(state.cheese_mints_by_id[cheeseMintId].created_by)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                    {{ truncateArweaveAddress(state.cheese_mints_by_id[cheeseMintId].created_by) }}
+                  </a>
+                </td>
+                <td class="border">
+                  {{ new Date(state.cheese_mints_by_id[cheeseMintId].updated_at || state.cheese_mints_by_id[cheeseMintId].created_at).toUTCString() }}
+                  by
+                  <a :href="aoLinkUrl(state.cheese_mints_by_id[cheeseMintId].updated_by || state.cheese_mints_by_id[cheeseMintId].created_by)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                    {{ truncateArweaveAddress(state.cheese_mints_by_id[cheeseMintId].updated_by || state.cheese_mints_by_id[cheeseMintId].created_by) }}
+                  </a>
+                </td>
+                <td class="border">
+                  <a :href="`https://aolink.arweave.net/#/message/${cheeseMintId}`" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                    {{ truncateArweaveAddress(cheeseMintId) }}
+                  </a>
+                </td>
+                <td class="border">
+                  <template v-if="editCheeseMintId === cheeseMintId">
+                    <button class="border px-4 rounded cursor-pointer" @click="onUpdateAchievementClicked">Update</button>
+                    <button class="border px-4 rounded cursor-pointer" @click="onCancelEditAchievementClicked">Cancel</button>
+                  </template>
+                  <template v-else>
+                    <button class="border px-4 rounded cursor-pointer" @click="onEditAchievementClicked(cheeseMintId)">Edit</button>
+                  </template>
+                </td>
+              </tr>
+            </template>
+            <template v-if="tab === 'awarded'">
+              <template v-for="address in Object.keys(state.cheese_mints_by_address)" :key="address">
+                <tr v-for="cheeseMintId in Object.keys(state.cheese_mints_by_address[address])" :key="address + cheeseMintId">
+                  <td class="border">
+                    <a :href="aoLinkUrl(address)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                      {{ address }}
+                    </a>
+                  </td>
+                  <td class="border">{{ state.cheese_mints_by_id[cheeseMintId].name }}</td>
+                  <td class="border">
+                    {{ new Date(state.cheese_mints_by_address[address][cheeseMintId].awarded_at).toUTCString() }}
+                    by
+                    <a :href="aoLinkUrl(state.cheese_mints_by_address[address][cheeseMintId].awarded_by)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                      {{ truncateArweaveAddress(state.cheese_mints_by_address[address][cheeseMintId].awarded_by) }}
+                    </a>
+                    @
+                    <a :href="aoLinkUrl(state.cheese_mints_by_address[address][cheeseMintId].message_id)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                      {{ truncateArweaveAddress(state.cheese_mints_by_address[address][cheeseMintId].message_id) }}
+                    </a>
+                  </td>
+                  <td class="border">
+                    <button class="border px-4 rounded cursor-pointer" @click="onRevokeAchievementClicked(address, cheeseMintId)">Revoke</button>
+                  </td>
+                </tr>
+              </template>
+            </template>
+            <template v-if="tab === 'acl'">
+              <tr>
+                <td class="border">Owner</td>
+                <td class="border">
+                  <a :href="aoLinkUrl(state.owner)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                    {{ state.owner }}
+                  </a>
+                </td>
+                <td class="border"></td>
+              </tr>
+              <template v-for="role in Object.keys(state.acl.roles)" :key="role">
+                <tr v-for="address in Object.keys(state.acl.roles[role])" :key="address + role">
+                  <td class="border">{{ role }}</td>
+                  <td class="border">
+                    <a :href="aoLinkUrl(address)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
+                      {{ address }}
+                    </a>
+                  </td>
+                  <td class="border">
+                    <button class="border px-4 rounded cursor-pointer" @click="onRevokeAclClicked(address, role)">Revoke</button>
+                  </td>
+                </tr>
+              </template>
+            </template>
+          </tbody>
+          <tfoot>
+            <tr>
+              <template v-if="tab === 'achievements'">
+                <td class="border">
+                  <input type="text" id="name" name="name" class="inline outline border-black" />
+                </td>
+                <td class="border">
+                  <input type="text" id="description" name="description" class="inline outline border-black" />
+                </td>
+                <td class="border">
+                  <input type="number" id="points" name="points" class="inline outline border-black" />
+                </td>
+                <td class="border">
+                  <input type="text" id="icon" name="icon" class="inline outline border-black" />
+                </td>
+                <td class="border" colspan="3">
+                  <button class="border px-4 rounded cursor-pointer" @click="onCreateAchievementClicked">Create</button>
+                </td>
+              </template>
+              <template v-if="tab === 'awarded'">
+                <td class="border">
+                  <input type="text" id="award_to_address" name="award_to_address" class="inline outline border-black" />
+                </td>
+                <td class="border">
+                  <select id="award_cheese_mint_id" name="award_cheese_mint_id" class="inline outline border-black">
+                    <option v-for="cheeseMintId in Object.keys(state.cheese_mints_by_id)" :key="cheeseMintId" :value="cheeseMintId" class="text-black">
+                      {{ state.cheese_mints_by_id[cheeseMintId].name }}
+                    </option>
+                  </select>
+                </td>
+                <td class="border" colspan="2">
+                  <button class="border px-4 rounded cursor-pointer" @click="onAwardAchievementClicked">Award</button>
+                </td>
+              </template>
+              <template v-if="tab === 'acl'">
+                <td class="border">
+                  <select id="role" name="role" class="inline outline border-black">
+                    <option value="admin" class="text-black">admin</option>
+                    <option value="Update-Roles" class="text-black">Update-Roles</option>
+                    <option value="Create-Cheese-Mint" class="text-black">Create-Cheese-Mint</option>
+                    <option value="Update-Cheese-Mint" class="text-black">Update-Cheese-Mint</option>
+                    <option value="Remove-Cheese-Mint" class="text-black">Remove-Cheese-Mint</option>
+                    <option value="Award-Cheese-Mint" class="text-black">Award-Cheese-Mint</option>
+                    <option value="Revoke-Cheese-Mint" class="text-black">Revoke-Cheese-Mint</option>
+                  </select>
+                </td>
+                <td class="border">
+                  <input type="text" id="address" name="address" class="inline outline border-black" />
+                </td>
+                <td class="border">
+                  <button class="border px-4 rounded cursor-pointer" @click="onGrantAclClicked">Grant</button>
+                </td>
+              </template>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { createDataItemSigner } from '@permaweb/aoconnect'
+import { useSeoMeta } from '@unhead/vue'
+import { onMounted, ref } from 'vue'
+import { sendAosDryRun, sendAosMessage } from '../lib/send-aos-message'
+import { useWallet } from '../composables/wallet'
+import { aoLinkUrl, truncateArweaveAddress } from '../lib/utils'
+
+useSeoMeta({
+  titleTemplate: ''
+})
+const wallet = useWallet()
+const processId = 'CvnLLpDLHgbabfvqr3l1ORPQovQnjF3njO9c0AWkCKw'
+const isLoading = ref(true)
+const errorMessage = ref('')
+const state = ref<any>(null)
+const tab = ref('achievements')
+const editCheeseMintId = ref<string | null>(null)
+
+onMounted(reloadProcessState)
+
+async function reloadProcessState() {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    const { result } = await sendAosDryRun({
+      processId,
+      tags: [{ name: 'Action', value: 'View-State' }]
+    })
+
+    if (result.Messages && result.Messages.length > 0) {
+      state.value = JSON.parse(result.Messages[0].Data)
+      console.log('Got state', state.value)
+    } else {
+      console.log(`No AO DryRun Messages returned for process ${processId}`)
+    }
+  } catch (error) {
+    console.error(`Error during AO DryRun for process ${processId}`, error)
+  }
+
+  isLoading.value = false
+}
+
+async function onCreateAchievementClicked() {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  const nameInput = document.getElementById('name') as HTMLInputElement
+  const descriptionInput = document.getElementById('description') as HTMLInputElement
+  const pointsInput = document.getElementById('points') as HTMLInputElement
+  const iconInput = document.getElementById('icon') as HTMLInputElement
+  const name = nameInput.value
+  const description = descriptionInput.value
+  const points = parseInt(pointsInput.value)
+  const iconTxId = iconInput.value
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [
+        { name: 'Action', value: 'Create-Cheese-Mint' },
+        { name: 'Cheese-Mint-Name', value: name },
+        { name: 'Description', value: description },
+        { name: 'Points', value: points.toString() },
+        { name: 'Icon', value: iconTxId }
+      ]
+    })
+
+    console.log(`Achievement creation message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error creating achievement', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function onUpdateAchievementClicked() {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  if (!editCheeseMintId.value) {
+    alert('No achievement selected for editing.')
+    return
+  }
+
+  const nameInput = document.getElementById('edit_name') as HTMLInputElement
+  const descriptionInput = document.getElementById('edit_description') as HTMLInputElement
+  const pointsInput = document.getElementById('edit_points') as HTMLInputElement
+  const iconInput = document.getElementById('edit_icon') as HTMLInputElement
+  const name = nameInput.value
+  const description = descriptionInput.value
+  const points = parseInt(pointsInput.value)
+  const iconTxId = iconInput.value
+  console.log('Updating achievement', {
+    cheeseMintId: editCheeseMintId.value,
+    name,
+    description,
+    points,
+    iconTxId
+  })
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [
+        { name: 'Action', value: 'Update-Cheese-Mint' },
+        { name: 'Cheese-Mint-Id', value: editCheeseMintId.value },
+        { name: 'Cheese-Mint-Name', value: name },
+        { name: 'Description', value: description },
+        { name: 'Points', value: points.toString() },
+        { name: 'Icon', value: iconTxId }
+      ]
+    })
+
+    console.log(`Achievement update message sent with ID: ${messageId}`)
+    editCheeseMintId.value = null
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error updating achievement', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function onEditAchievementClicked(cheeseMintId: string) {
+  editCheeseMintId.value = cheeseMintId
+}
+
+async function onCancelEditAchievementClicked() {
+  editCheeseMintId.value = null
+}
+
+async function onGrantAclClicked() {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  const roleInput = document.getElementById('role') as HTMLInputElement
+  const addressInput = document.getElementById('address') as HTMLInputElement
+  const role = roleInput.value
+  const address = addressInput.value
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [{ name: 'Action', value: 'Update-Roles' }],
+      data: JSON.stringify({ Grant: { [address]: [role] } })
+    })
+
+    console.log(`ACL grant message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error granting ACL', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function onRevokeAclClicked(address: string, role: string) {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  if (!confirm(`Are you sure you want to revoke role "${role}" from address ${address}?`)) {
+    return
+  }
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [{ name: 'Action', value: 'Update-Roles' }],
+      data: JSON.stringify({ Revoke: { [address]: [role] } })
+    })
+
+    console.log(`ACL revoke message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error revoking ACL', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function onAwardAchievementClicked() {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  const cheeseMintIdInput = document.getElementById('award_cheese_mint_id') as HTMLInputElement
+  const addressInput = document.getElementById('award_to_address') as HTMLInputElement
+  const cheeseMintId = cheeseMintIdInput.value
+  const address = addressInput.value
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [
+        { name: 'Action', value: 'Award-Cheese-Mint' },
+        { name: 'Cheese-Mint-Id', value: cheeseMintId },
+        { name: 'Award-To-Address', value: address }
+      ]
+    })
+
+    console.log(`Achievement award message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error awarding achievement', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function onRevokeAchievementClicked(address: string, cheeseMintId: string) {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
+
+  if (!confirm(`Are you sure you want to revoke achievement "${state.value.cheese_mints_by_id[cheeseMintId].name}" from address ${address}?`)) {
+    return
+  }
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [
+        { name: 'Action', value: 'Revoke-Cheese-Mint' },
+        { name: 'Cheese-Mint-Id', value: cheeseMintId },
+        { name: 'Revoke-From-Address', value: address }
+      ]
+    })
+
+    console.log(`Achievement revoke message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error revoking achievement', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
