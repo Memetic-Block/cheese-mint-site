@@ -103,8 +103,8 @@ job "cheese-mint-site-static-stage" {
       }
 
       resources {
-        cpu    = 1024
-        memory = 2048
+        cpu    = 2048
+        memory = 4096
       }
     }
   }
