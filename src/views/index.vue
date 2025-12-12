@@ -90,7 +90,7 @@
                 <th class="border"></th>
               </template>
               <template v-if="tab === 'awarded'">
-                <th class="border">Address</th>
+                <th class="border" width="324">Address</th>
                 <th class="border">Achievement</th>
                 <th class="border">Awarded</th>
                 <th class="border"></th>
@@ -119,7 +119,7 @@
                 </td>
                 <td class="border px-2 py-1">
                   <a class="cursor-pointer" :href="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" target="_blank" rel="noopener noreferrer">
-                    <img style="width: 32px; height: 32px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
+                    <img style="width: 128px; height: 128px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
                   </a>
                 </td>
                 <td class="border px-2 py-1">
