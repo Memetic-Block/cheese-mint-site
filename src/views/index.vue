@@ -8,23 +8,81 @@
       <button class="border px-4 rounded cursor-pointer" @click="reloadProcessState">Reload</button>
     </template>
     <template v-else>
+      <Dialog v-model:open="achievementDialogOpen">
+        <DialogHeader>
+          <DialogTitle>{{ isEditMode ? 'Edit Achievement' : 'Create Achievement' }}</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Name</label>
+              <input 
+                type="text" 
+                v-model="achievementForm.name" 
+                class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded outline-none focus:border-blue-500 dark:focus:border-blue-400" 
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Category</label>
+              <input 
+                type="text" 
+                v-model="achievementForm.category" 
+                class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded outline-none focus:border-blue-500 dark:focus:border-blue-400" 
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Points</label>
+              <input 
+                type="number" 
+                v-model.number="achievementForm.points" 
+                class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded outline-none focus:border-blue-500 dark:focus:border-blue-400" 
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Description</label>
+              <input 
+                type="text" 
+                v-model="achievementForm.description" 
+                class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded outline-none focus:border-blue-500 dark:focus:border-blue-400" 
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Icon (Arweave TX ID)</label>
+              <input 
+                type="text" 
+                v-model="achievementForm.icon" 
+                class="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded outline-none focus:border-blue-500 dark:focus:border-blue-400" 
+              />
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <button class="border border-gray-300 dark:border-gray-600 px-4 py-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" @click="achievementDialogOpen = false">
+            Cancel
+          </button>
+          <button class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700" @click="handleAchievementSubmit">
+            {{ isEditMode ? 'Update' : 'Create' }}
+          </button>
+        </DialogFooter>
+      </Dialog>
       <div class="text-xs">
-        <table>
+        <table class="table-fixed">
           <thead>
             <tr>
-              <th @click="tab = 'achievements'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'achievements' ? '' : 'text-gray-500'">Achievements</th>
-              <th @click="tab = 'awarded'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'awarded' ? '' : 'text-gray-500'">Awarded</th>
-              <th @click="tab = 'acl'" class="border px-4 py-2 cursor-pointer underline" :class="tab === 'acl' ? '' : 'text-gray-500'">ACL</th>              
+              <th @click="tab = 'achievements'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'achievements' ? '' : 'text-gray-500'">Achievements</th>
+              <th @click="tab = 'awarded'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'awarded' ? '' : 'text-gray-500'">Awarded</th>
+              <th @click="tab = 'acl'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'acl' ? '' : 'text-gray-500'">ACL</th>              
             </tr>
           </thead>
         </table>
-        <table>
+        <table class="table-fixed">
           <thead>
             <tr>
               <template v-if="tab === 'achievements'">
                 <th class="border">Name</th>
-                <th class="border">Description</th>
+                <th class="border">Category</th>
                 <th class="border">Points</th>
+                <th class="border">Description</th>
                 <th class="border">Icon</th>
                 <th class="border">Created</th>
                 <th class="border">Updated</th>
@@ -47,67 +105,49 @@
           <tbody>
             <template v-if="tab === 'achievements'">
               <tr v-for="cheeseMintId in Object.keys(state.cheese_mints_by_id)" :key="cheeseMintId">
-                <td class="border">
-                  <template v-if="editCheeseMintId === cheeseMintId">
-                    <input type="text" id="edit_name" name="edit_name" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].name" />
-                  </template>
-                  <template v-else>
-                    {{ state.cheese_mints_by_id[cheeseMintId].name }}
-                  </template>
+                <td class="border px-2 py-1">
+                  {{ state.cheese_mints_by_id[cheeseMintId].name }}
                 </td>
-                <td class="border">
-                  <template v-if="editCheeseMintId === cheeseMintId">
-                    <input type="text" id="edit_description" name="edit_description" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].description" />
-                  </template>
-                  <template v-else>
-                    {{ state.cheese_mints_by_id[cheeseMintId].description }}
-                  </template>
+                <td class="border px-2 py-1">
+                  {{ state.cheese_mints_by_id[cheeseMintId].category }}
                 </td>
-                <td class="border">
-                  <template v-if="editCheeseMintId === cheeseMintId">
-                    <input type="number" id="edit_points" name="edit_points" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].points" />
-                  </template>
-                  <template v-else>
+                <td class="border px-2 py-1">
                   {{ state.cheese_mints_by_id[cheeseMintId].points }}
-                  </template>
                 </td>
-                <td class="border">
-                  <template v-if="editCheeseMintId === cheeseMintId">
-                    <input type="text" id="edit_icon" name="edit_icon" class="inline outline border-black" :value="state.cheese_mints_by_id[cheeseMintId].icon" />
-                  </template>
-                  <template v-else>
-                    <a class="cursor-pointer" :href="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" target="_blank" rel="noopener noreferrer">
-                      <img style="width: 32px; height: 32px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
-                    </a>
-                  </template>
+                <td class="border px-2 py-1">
+                  {{ state.cheese_mints_by_id[cheeseMintId].description }}
                 </td>
-                <td class="border">
+                <td class="border px-2 py-1">
+                  <a class="cursor-pointer" :href="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" target="_blank" rel="noopener noreferrer">
+                    <img style="width: 32px; height: 32px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
+                  </a>
+                </td>
+                <td class="border px-2 py-1">
                   {{ new Date(state.cheese_mints_by_id[cheeseMintId].created_at).toUTCString() }}
                   by
                   <a :href="aoLinkUrl(state.cheese_mints_by_id[cheeseMintId].created_by)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
                     {{ truncateArweaveAddress(state.cheese_mints_by_id[cheeseMintId].created_by) }}
                   </a>
                 </td>
-                <td class="border">
+                <td class="border px-2 py-1">
                   {{ new Date(state.cheese_mints_by_id[cheeseMintId].updated_at || state.cheese_mints_by_id[cheeseMintId].created_at).toUTCString() }}
                   by
                   <a :href="aoLinkUrl(state.cheese_mints_by_id[cheeseMintId].updated_by || state.cheese_mints_by_id[cheeseMintId].created_by)" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
                     {{ truncateArweaveAddress(state.cheese_mints_by_id[cheeseMintId].updated_by || state.cheese_mints_by_id[cheeseMintId].created_by) }}
                   </a>
                 </td>
-                <td class="border">
+                <td class="border px-2 py-1">
                   <a :href="`https://aolink.arweave.net/#/message/${cheeseMintId}`" target="_blank" rel="noopener noreferrer" class="cursor-pointer underline">
                     {{ truncateArweaveAddress(cheeseMintId) }}
                   </a>
                 </td>
-                <td class="border">
-                  <template v-if="editCheeseMintId === cheeseMintId">
-                    <button class="border px-4 rounded cursor-pointer" @click="onUpdateAchievementClicked">Update</button>
-                    <button class="border px-4 rounded cursor-pointer" @click="onCancelEditAchievementClicked">Cancel</button>
-                  </template>
-                  <template v-else>
-                    <button class="border px-4 rounded cursor-pointer" @click="onEditAchievementClicked(cheeseMintId)">Edit</button>
-                  </template>
+                <td class="border px-2 py-1">
+                  <button class="border px-4 py-1 rounded cursor-pointer hover:bg-blue-100" @click="openEditDialog(cheeseMintId)">
+                    Edit
+                  </button>
+                  <button class="border px-4 py-1 rounded cursor-pointer hover:bg-red-100" @click="onRemoveAchievementClicked(cheeseMintId)">
+                    Remove
+                  </button>
                 </td>
               </tr>
             </template>
@@ -165,20 +205,10 @@
           <tfoot>
             <tr>
               <template v-if="tab === 'achievements'">
-                <td class="border">
-                  <input type="text" id="name" name="name" class="inline outline border-black" />
-                </td>
-                <td class="border">
-                  <input type="text" id="description" name="description" class="inline outline border-black" />
-                </td>
-                <td class="border">
-                  <input type="number" id="points" name="points" class="inline outline border-black" />
-                </td>
-                <td class="border">
-                  <input type="text" id="icon" name="icon" class="inline outline border-black" />
-                </td>
-                <td class="border" colspan="3">
-                  <button class="border px-4 rounded cursor-pointer" @click="onCreateAchievementClicked">Create</button>
+                <td class="border" colspan="9">
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700" @click="openCreateDialog">
+                    Create Achievement
+                  </button>
                 </td>
               </template>
               <template v-if="tab === 'awarded'">
@@ -230,17 +260,65 @@ import { onMounted, ref } from 'vue'
 import { sendAosDryRun, sendAosMessage } from '../lib/send-aos-message'
 import { useWallet } from '../composables/wallet'
 import { aoLinkUrl, truncateArweaveAddress } from '../lib/utils'
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '../components/ui/dialog'
 
 useSeoMeta({
   titleTemplate: ''
 })
+
 const wallet = useWallet()
-const processId = 'CvnLLpDLHgbabfvqr3l1ORPQovQnjF3njO9c0AWkCKw'
+const processId = 'sDQbE8v-k7hLxys85n256Xwk9AUI1-p1GbSSox652ks'
 const isLoading = ref(true)
 const errorMessage = ref('')
 const state = ref<any>(null)
 const tab = ref('achievements')
+
+// Dialog state
+const achievementDialogOpen = ref(false)
+const isEditMode = ref(false)
 const editCheeseMintId = ref<string | null>(null)
+const achievementForm = ref({
+  name: '',
+  category: '',
+  points: 0,
+  description: '',
+  icon: ''
+})
+
+function openCreateDialog() {
+  isEditMode.value = false
+  editCheeseMintId.value = null
+  achievementForm.value = {
+    name: '',
+    category: '',
+    points: 0,
+    description: '',
+    icon: ''
+  }
+  achievementDialogOpen.value = true
+}
+
+function openEditDialog(cheeseMintId: string) {
+  const achievement = state.value.cheese_mints_by_id[cheeseMintId]
+  isEditMode.value = true
+  editCheeseMintId.value = cheeseMintId
+  achievementForm.value = {
+    name: achievement.name,
+    category: achievement.category,
+    points: achievement.points,
+    description: achievement.description,
+    icon: achievement.icon
+  }
+  achievementDialogOpen.value = true
+}
+
+async function handleAchievementSubmit() {
+  if (isEditMode.value) {
+    await onUpdateAchievementClicked()
+  } else {
+    await onCreateAchievementClicked()
+  }
+}
 
 onMounted(reloadProcessState)
 
@@ -272,28 +350,21 @@ async function onCreateAchievementClicked() {
     return
   }
 
-  const nameInput = document.getElementById('name') as HTMLInputElement
-  const descriptionInput = document.getElementById('description') as HTMLInputElement
-  const pointsInput = document.getElementById('points') as HTMLInputElement
-  const iconInput = document.getElementById('icon') as HTMLInputElement
-  const name = nameInput.value
-  const description = descriptionInput.value
-  const points = parseInt(pointsInput.value)
-  const iconTxId = iconInput.value
-
   try {
     isLoading.value = true
     errorMessage.value = ''
+    achievementDialogOpen.value = false
 
     const { messageId } = await sendAosMessage({
       processId,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Create-Cheese-Mint' },
-        { name: 'Cheese-Mint-Name', value: name },
-        { name: 'Description', value: description },
-        { name: 'Points', value: points.toString() },
-        { name: 'Icon', value: iconTxId }
+        { name: 'Cheese-Mint-Name', value: achievementForm.value.name },
+        { name: 'Description', value: achievementForm.value.description },
+        { name: 'Points', value: achievementForm.value.points.toString() },
+        { name: 'Icon', value: achievementForm.value.icon },
+        { name: 'Category', value: achievementForm.value.category }
       ]
     })
 
@@ -318,24 +389,10 @@ async function onUpdateAchievementClicked() {
     return
   }
 
-  const nameInput = document.getElementById('edit_name') as HTMLInputElement
-  const descriptionInput = document.getElementById('edit_description') as HTMLInputElement
-  const pointsInput = document.getElementById('edit_points') as HTMLInputElement
-  const iconInput = document.getElementById('edit_icon') as HTMLInputElement
-  const name = nameInput.value
-  const description = descriptionInput.value
-  const points = parseInt(pointsInput.value)
-  const iconTxId = iconInput.value
-  console.log('Updating achievement', {
-    cheeseMintId: editCheeseMintId.value,
-    name,
-    description,
-    points,
-    iconTxId
-  })
   try {
     isLoading.value = true
     errorMessage.value = ''
+    achievementDialogOpen.value = false
 
     const { messageId } = await sendAosMessage({
       processId,
@@ -343,10 +400,11 @@ async function onUpdateAchievementClicked() {
       tags: [
         { name: 'Action', value: 'Update-Cheese-Mint' },
         { name: 'Cheese-Mint-Id', value: editCheeseMintId.value },
-        { name: 'Cheese-Mint-Name', value: name },
-        { name: 'Description', value: description },
-        { name: 'Points', value: points.toString() },
-        { name: 'Icon', value: iconTxId }
+        { name: 'Cheese-Mint-Name', value: achievementForm.value.name },
+        { name: 'Description', value: achievementForm.value.description },
+        { name: 'Points', value: achievementForm.value.points.toString() },
+        { name: 'Icon', value: achievementForm.value.icon },
+        { name: 'Category', value: achievementForm.value.category }
       ]
     })
 
@@ -361,12 +419,37 @@ async function onUpdateAchievementClicked() {
   }
 }
 
-async function onEditAchievementClicked(cheeseMintId: string) {
-  editCheeseMintId.value = cheeseMintId
-}
+async function onRemoveAchievementClicked(cheeseMintId: string) {
+  if (!wallet.address) {
+    alert('Please connect your wallet first.')
+    return
+  }
 
-async function onCancelEditAchievementClicked() {
-  editCheeseMintId.value = null
+  if (!confirm(`Are you sure you want to remove achievement "${state.value.cheese_mints_by_id[cheeseMintId].name}"? This action cannot be undone and will revoke it from all users who have earned it.`)) {
+    return
+  }
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const { messageId } = await sendAosMessage({
+      processId,
+      signer: createDataItemSigner(window.arweaveWallet),
+      tags: [
+        { name: 'Action', value: 'Remove-Cheese-Mint' },
+        { name: 'Cheese-Mint-Id', value: cheeseMintId }
+      ]
+    })
+
+    console.log(`Achievement removal message sent with ID: ${messageId}`)
+    await reloadProcessState()
+  } catch (error: any) {
+    console.error('Error removing achievement', error)
+    errorMessage.value = error.message || 'Unknown error'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 async function onGrantAclClicked() {
