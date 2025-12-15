@@ -1,7 +1,7 @@
 <template>
   <div class="mt-6">
     <template v-if="isLoading">
-      Loading...
+      Loading {{ currentCollectionName }} {{ deployedProcessIds[currentCollectionName] }}...
     </template>
     <template v-else-if="errorMessage">
       Error: {{ errorMessage }}
@@ -69,12 +69,33 @@
         <table class="table-fixed">
           <thead>
             <tr>
+              <th class="text-center! border px-4 py-2">
+                <select
+                  v-model="currentCollectionName"
+                  class="bg-white text-black px-2 py-1 rounded outline border-black"
+                >
+                  <option value="wuzzy-achievements-dev">wuzzy-achievements-dev</option>
+                  <option value="wuzzy-achievements-stage">wuzzy-achievements-stage</option>
+                  <option value="wuzzy-achievements-live">wuzzy-achievements-live</option>
+                </select>
+              </th>
               <th @click="tab = 'achievements'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'achievements' ? '' : 'text-gray-500'">Achievements</th>
               <th @click="tab = 'awarded'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'awarded' ? '' : 'text-gray-500'">Awarded</th>
               <th @click="tab = 'acl'" class="text-center! border px-4 py-2 cursor-pointer underline" :class="tab === 'acl' ? '' : 'text-gray-500'">ACL</th>              
             </tr>
           </thead>
         </table>
+        <p class="font-bold text-xl">
+          Process ID:
+          <a
+            :href="aoLinkUrl(deployedProcessIds[currentCollectionName])"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cursor-pointer underline"
+          >
+            {{ deployedProcessIds[currentCollectionName] }}
+          </a>
+        </p>
         <table class="table-fixed">
           <thead>
             <tr>
@@ -117,7 +138,7 @@
                 <td class="border px-2 py-1">
                   {{ state.cheese_mints_by_id[cheeseMintId].description }}
                 </td>
-                <td class="border px-2 py-1">
+                <td class="border px-2 py-1 dark:bg-gray-800">
                   <a class="cursor-pointer" :href="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" target="_blank" rel="noopener noreferrer">
                     <img style="width: 128px; height: 128px;" :src="`https://arweave.net/${state.cheese_mints_by_id[cheeseMintId].icon}`" alt="Icon" />
                   </a>
@@ -206,7 +227,7 @@
             <tr>
               <template v-if="tab === 'achievements'">
                 <td class="border" colspan="9">
-                  <button class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700" @click="openCreateDialog">
+                  <button class="px-4 py-2 rounded cursor-pointer border hover:bg-blue-800" @click="openCreateDialog">
                     Create Achievement
                   </button>
                 </td>
@@ -256,7 +277,7 @@
 <script setup lang="ts">
 import { createDataItemSigner } from '@permaweb/aoconnect'
 import { useSeoMeta } from '@unhead/vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { sendAosDryRun, sendAosMessage } from '../lib/send-aos-message'
 import { useWallet } from '../composables/wallet'
 import { aoLinkUrl, truncateArweaveAddress } from '../lib/utils'
@@ -266,8 +287,15 @@ useSeoMeta({
   titleTemplate: ''
 })
 
+const deployedProcessIds = {
+  'wuzzy-achievements-dev':   'sDQbE8v-k7hLxys85n256Xwk9AUI1-p1GbSSox652ks',
+  'wuzzy-achievements-stage': 'mu9_WPdmWXvAGCP_aNzTVCYN0j62CY0VepzDPupyGk4',
+  'wuzzy-achievements-live':  'uvwZhbu8XTiS3vGlgn7OlaEV_r84opf7VjoNns0w3kY'
+}
+
 const wallet = useWallet()
-const processId = 'sDQbE8v-k7hLxys85n256Xwk9AUI1-p1GbSSox652ks'
+const currentCollectionName = ref<keyof typeof deployedProcessIds>('wuzzy-achievements-dev')
+const processId = computed(() => deployedProcessIds[currentCollectionName.value])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const state = ref<any>(null)
@@ -320,6 +348,8 @@ async function handleAchievementSubmit() {
   }
 }
 
+watch(currentCollectionName, reloadProcessState)
+
 onMounted(reloadProcessState)
 
 async function reloadProcessState() {
@@ -327,7 +357,7 @@ async function reloadProcessState() {
     errorMessage.value = ''
     isLoading.value = true
     const { result } = await sendAosDryRun({
-      processId,
+      processId: processId.value,
       tags: [{ name: 'Action', value: 'View-State' }]
     })
 
@@ -356,7 +386,7 @@ async function onCreateAchievementClicked() {
     achievementDialogOpen.value = false
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Create-Cheese-Mint' },
@@ -395,7 +425,7 @@ async function onUpdateAchievementClicked() {
     achievementDialogOpen.value = false
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Update-Cheese-Mint' },
@@ -434,7 +464,7 @@ async function onRemoveAchievementClicked(cheeseMintId: string) {
     errorMessage.value = ''
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Remove-Cheese-Mint' },
@@ -468,7 +498,7 @@ async function onGrantAclClicked() {
     errorMessage.value = ''
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [{ name: 'Action', value: 'Update-Roles' }],
       data: JSON.stringify({ Grant: { [address]: [role] } })
@@ -499,7 +529,7 @@ async function onRevokeAclClicked(address: string, role: string) {
     errorMessage.value = ''
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [{ name: 'Action', value: 'Update-Roles' }],
       data: JSON.stringify({ Revoke: { [address]: [role] } })
@@ -531,7 +561,7 @@ async function onAwardAchievementClicked() {
     errorMessage.value = ''
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Award-Cheese-Mint' },
@@ -565,7 +595,7 @@ async function onRevokeAchievementClicked(address: string, cheeseMintId: string)
     errorMessage.value = ''
 
     const { messageId } = await sendAosMessage({
-      processId,
+      processId: processId.value,
       signer: createDataItemSigner(window.arweaveWallet),
       tags: [
         { name: 'Action', value: 'Revoke-Cheese-Mint' },
